@@ -1,47 +1,22 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login — Motofix</title><script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{brand:'#FF6B00',ink:'#0B0B0C',panel:'#1A1A1E'}}}}</script>
+</head>
+<body class="min-h-screen bg-ink text-white grid place-items-center p-5">
+<main class="w-full max-w-md rounded-3xl border border-white/10 bg-panel p-7 shadow-2xl">
+    <a href="{{ route('login') }}" class="text-xs font-bold tracking-[.2em] text-brand">BENGKEL ORANGE</a>
+    <h1 class="mt-3 text-3xl font-black">Selamat datang.</h1><p class="mt-2 text-sm text-zinc-400">Login ke akun Motofix kamu.</p>
+    @if(session('success'))<p class="mt-4 rounded-xl bg-emerald-500/10 p-3 text-sm text-emerald-300">{{ session('success') }}</p>@endif
+    @if($errors->any())<div class="mt-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+    <form method="POST" action="{{ route('login.store') }}" class="mt-6 space-y-4">@csrf
+        <label class="block text-sm">Email<input name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="email" class="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none focus:border-brand"></label>
+        <label class="block text-sm">Password<input name="password" type="password" required autocomplete="current-password" class="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none focus:border-brand"></label>
+        <label class="flex items-center gap-2 text-sm text-zinc-400"><input type="checkbox" name="remember" value="1" class="accent-orange-500"> Ingat saya</label>
+        <button class="w-full rounded-xl bg-brand px-4 py-3 font-black text-black hover:bg-orange-400">Login →</button>
     </form>
-</x-guest-layout>
+    <p class="mt-5 text-center text-sm text-zinc-400">Belum punya akun? <a class="font-bold text-brand" href="{{ route('register') }}">Daftar</a></p>
+</main>
+</body></html>

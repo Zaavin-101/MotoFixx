@@ -1,4 +1,36 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
-class Booking extends Model { protected $fillable=['user_id','customer_motor_id','mechanic_id','service_package_id','booking_date','booking_time','complaint','estimated_price','status']; protected $casts=['booking_date'=>'date','estimated_price'=>'decimal:2']; public function user(){return $this->belongsTo(User::class);} public function customerMotor(){return $this->belongsTo(CustomerMotor::class);} public function mechanic(){return $this->belongsTo(Mechanic::class);} public function servicePackage(){return $this->belongsTo(ServicePackage::class);} public function progress(){return $this->hasMany(ServiceProgress::class);} }
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Booking extends Model
+{
+    protected $fillable = [
+        'user_id', 'kode_booking', 'nama_pelanggan', 'merek_motor', 'tipe_motor', 'nomor_plat',
+        'keluhan', 'tanggal', 'jam', 'service_id', 'mekanik_name',
+        'status_pengerjaan', 'status_pembayaran', 'total_harga', 'payment_method',
+    ];
+
+    protected function casts(): array
+    {
+        return ['tanggal' => 'date', 'total_harga' => 'integer'];
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(BookingStatusHistory::class)->orderBy('created_at');
+    }
+}

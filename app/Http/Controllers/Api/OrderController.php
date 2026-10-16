@@ -1,8 +1,0 @@
-<?php
-namespace App\Http\Controllers\Api;
-use App\Http\Controllers\Controller;
-use App\Models\{Order,OrderItem,Sparepart,Payment,Invoice};
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-class OrderController extends Controller { public function index(Request $r){return response()->json(Order::with(['items','payment','invoice'])->where('user_id',$r->user()->id)->latest()->get());} public function checkout(Request $r){$d=$r->validate(['items'=>'required|array|min:1','items.*.sparepart_id'=>'required|exists:spareparts,id','items.*.quantity'=>'required|integer|min:1','payment_method'=>'required|string|max:30']);return DB::transaction(function()use($r,$d){$total=0;$items=[];foreach($d['items'] as $it){$p=Sparepart::lockForUpdate()->findOrFail($it['sparepart_id']);abort_if(!$p->is_active||$p->stock<$it['quantity'],422,'Stok sparepart tidak cukup.');$sub=$p->price*$it['quantity'];$total+=$sub;$items[]=[$p,$it['quantity'],$sub];}$o=Order::create(['user_id'=>$r->user()->id,'order_number'=>'MC-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),'total_amount'=>$total,'status'=>'pending']);foreach($items as [$p,$qty,$sub]){OrderItem::create(['order_id'=>$o->id,'sparepart_id'=>$p->id,'name'=>$p->name,'quantity'=>$qty,'price'=>$p->price,'subtotal'=>$sub]);$p->decrement('stock',$qty);} $pay=Payment::create(['order_id'=>$o->id,'method'=>$d['payment_method'],'amount'=>$total,'status'=>'pending']);$inv=Invoice::create(['order_id'=>$o->id,'invoice_number'=>'INV-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),'issued_at'=>now()]);return response()->json(['message'=>'Order berhasil dibuat','order'=>$o->load(['items','payment','invoice'])],201);});} }
