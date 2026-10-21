@@ -1,53 +1,51 @@
 <?php
-
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BengkelController;
-use App\Http\Controllers\ChartController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\SparepartShopController;
-use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', [BengkelController::class, 'home'])->name('home');
-
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SparepartController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\MidtransWebhookController;
+use App\Http\Controllers\MechanicTrackingController;
+use App\Http\Controllers\MechanicDashboardController;
+use App\Http\Controllers\VehicleController;
+Route::get('/',[ServiceController::class,'home'])->name('home');
+Route::get('/paket-servis',[ServiceController::class,'index'])->name('services.index');
+Route::get('/sparepart',[SparepartController::class,'index'])->name('spareparts.index');
+Route::get('/keranjang',[CartController::class,'index'])->name('cart.index');
+Route::post('/keranjang/tambah',[CartController::class,'add'])->name('cart.add');
+Route::patch('/keranjang',[CartController::class,'update'])->name('cart.update');
+Route::delete('/keranjang',[CartController::class,'remove'])->name('cart.remove');
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.store');
+    Route::get('/login',[AuthController::class,'showLogin'])->name('login');
+    Route::post('/login',[AuthController::class,'login'])->middleware('throttle:10,1')->name('login.store');
+    Route::get('/register',[AuthController::class,'showRegister'])->name('register');
+    Route::post('/register',[AuthController::class,'register'])->middleware('throttle:5,1')->name('register.store');
 });
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-
+Route::post('/logout',[AuthController::class,'logout'])->middleware('auth')->name('logout');
+Route::post('/payments/midtrans/notification',MidtransWebhookController::class)->name('payments.midtrans.notification');
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [BengkelController::class, 'index'])->name('dashboard');
-    Route::get('/booking/create', [BengkelController::class, 'createBooking'])->name('booking.create');
-    Route::post('/booking', [BengkelController::class, 'storeBooking'])->name('booking.store');
-    Route::get('/booking/{booking}/invoice', [BengkelController::class, 'invoice'])->name('booking.invoice');
-    Route::get('/tracking', [TrackingController::class, 'index'])->name('tracking.index');
-    Route::get('/tracking/{booking}', [TrackingController::class, 'show'])->name('tracking.show');
-    Route::get('/tracking/{booking}/status', [TrackingController::class, 'status'])->name('tracking.status');
-
-    Route::get('/profile', [CustomerController::class, 'profile'])->name('profile.edit');
-    Route::put('/profile', [CustomerController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/notifications', [CustomerController::class, 'notifications'])->name('notifications.index');
-
-    Route::get('/spareparts', [SparepartShopController::class, 'index'])->name('spareparts.shop');
-    Route::post('/spareparts/checkout', [SparepartShopController::class, 'checkout'])->name('spareparts.checkout');
-    Route::get('/my-orders', [SparepartShopController::class, 'orders'])->name('spareparts.orders');
-    Route::get('/my-orders/{order}', [SparepartShopController::class, 'showOrder'])->name('spareparts.orders.show');
+    Route::get('/checkout',[CheckoutController::class,'index'])->name('checkout');
+    Route::post('/checkout',[CheckoutController::class,'store'])->middleware('throttle:10,1')->name('checkout.store');
+    Route::get('/pesanan-saya',[CheckoutController::class,'orders'])->name('orders.index');
+    Route::get('/pesanan/{order}',[CheckoutController::class,'show'])->name('orders.show');
+    Route::post('/pesanan/{order}/payment/retry',[CheckoutController::class,'retryPayment'])->name('orders.payment.retry');
+    Route::get('/pesanan/{order}/tracking',[MechanicTrackingController::class,'latest'])->name('orders.tracking');
+    Route::get('/kendaraan',[VehicleController::class,'index'])->name('vehicles.index');
+    Route::post('/kendaraan',[VehicleController::class,'store'])->name('vehicles.store');
 });
-
-// Admin routes are authenticated; each controller action also checks the admin/mechanic role.
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-    Route::get('/charts', [ChartController::class, 'index'])->name('charts');
-    Route::post('/services', [AdminController::class, 'storeService'])->name('services.store');
-    Route::put('/services/{service}', [AdminController::class, 'updateService'])->name('services.update');
-    Route::delete('/services/{service}', [AdminController::class, 'deleteService'])->name('services.delete');
-    Route::post('/spareparts', [AdminController::class, 'storeSparepart'])->name('spareparts.store');
-    Route::put('/spareparts/{sparepart}', [AdminController::class, 'updateSparepart'])->name('spareparts.update');
-    Route::delete('/spareparts/{sparepart}', [AdminController::class, 'deleteSparepart'])->name('spareparts.delete');
-    Route::patch('/bookings/{booking}/status', [TrackingController::class, 'updateStatus'])->name('bookings.status');
-    Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->name('bookings.payment');
+Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/',[AdminDashboardController::class,'index'])->name('dashboard');
+    Route::patch('/orders/{order}/status',[AdminDashboardController::class,'updateStatus'])->name('orders.status');
+    Route::post('/orders/{order}/mark-cash-paid',[AdminDashboardController::class,'markCashPaid'])->name('orders.mark-cash-paid');
+    Route::get('/inventory',[InventoryController::class,'index'])->name('inventory.index');
+    Route::post('/inventory',[InventoryController::class,'store'])->name('inventory.store');
+    Route::patch('/inventory/{sparepart}',[InventoryController::class,'update'])->name('inventory.update');
+});
+Route::middleware(['auth','role:mechanic'])->prefix('mekanik')->name('mechanic.')->group(function () {
+    Route::get('/',[MechanicDashboardController::class,'index'])->name('dashboard');
+    Route::patch('/pesanan/{order}/status',[MechanicDashboardController::class,'updateStatus'])->name('orders.status');
+    Route::post('/pesanan/{order}/lokasi',[MechanicTrackingController::class,'update'])->name('orders.location');
 });

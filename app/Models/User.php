@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role'];
+    protected $fillable = ['name', 'email', 'phone', 'password', 'role'];
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
@@ -19,18 +20,7 @@ class User extends Authenticatable
         return ['email_verified_at' => 'datetime', 'password' => 'hashed'];
     }
 
-    public function bookings(): HasMany
-    {
-        return $this->hasMany(Booking::class);
-    }
-
-    public function sparepartOrders(): HasMany
-    {
-        return $this->hasMany(SparepartOrder::class);
-    }
-
-    public function isAdmin(): bool
-    {
-        return in_array($this->role, ['admin', 'mechanic'], true);
-    }
+    public function vehicles(): HasMany { return $this->hasMany(Vehicle::class); }
+    public function orders(): HasMany { return $this->hasMany(Order::class); }
+    public function assignedOrders(): HasMany { return $this->hasMany(Order::class, 'mechanic_id'); }
 }
